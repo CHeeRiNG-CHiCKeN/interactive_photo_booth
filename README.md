@@ -1,0 +1,1 @@
+# interective_photo_booth
