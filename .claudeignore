@@ -1,0 +1,14 @@
+# 빌드 산출물 및 의존성 — 토큰 낭비 방지
+node_modules/
+dist/
+dist-ssr/
+
+# 캡처된 이미지 (대용량 바이너리)
+public/captures/
+
+# 로그
+*.log
+
+# OS 메타파일
+.DS_Store
+Thumbs.db
