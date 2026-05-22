@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Photobooth - Option 2 (MediaPipe)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2em;
+            z-index: 10;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .info-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-panel h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .legend {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .legend h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .green-line {
+            background: linear-gradient(90deg, #00ff00, #00ff00);
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .red-dot {
+            background: #ff0000;
+        }
+
+        .orange-dot {
+            background: #ffa500;
+        }
+
+        .yellow-dot {
+            background: #ffff00;
+        }
+
+        .cyan-dot {
+            background: #00ffff;
+        }
+
+        video {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 포즈 감지</h1>
+            <p>AI 기술로 당신의 포즈를 실시간으로 인식합니다!</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="video-wrapper">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>🤖 AI 모델 로딩 중...</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" id="startBtn">카메라 시작</button>
+            <button class="btn-secondary" id="stopBtn">카메라 중지</button>
+        </div>
+
+        <div class="info-panel">
+            <h2>📊 상태 정보</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">카메라</div>
+                    <div class="info-value" id="cameraStatus">❌ 준비 중</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">포즈 모델</div>
+                    <div class="info-value" id="poseStatus">📥 로딩 중</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">손 모델</div>
+                    <div class="info-value" id="handStatus">📥 로딩 중</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">포즈 감지</div>
+                    <div class="info-value" id="poseDetect">⏳ 대기</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">손 감지</div>
+                    <div class="info-value" id="handDetect">⏳ 대기</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">FPS</div>
+                    <div class="info-value" id="fps">-- fps</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>🎯 범례</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="green-line"></div>
+                    <span>포즈 뼈대</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color red-dot"></div>
+                    <span>높은 신뢰도</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color orange-dot"></div>
+                    <span>중간 신뢰도</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color yellow-dot"></div>
+                    <span>낮은 신뢰도</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color cyan-dot"></div>
+                    <span>손 랜드마크</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.11.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.0"></script>
+
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0"></script>
+
+    <script>
+        // 전역 상태
+        const state = {
+            isRunning: false,
+            detector: null,
+            handDetector: null,
+            poses: null,
+            hands: null,
+            lastFrameTime: Date.now(),
+            frameCount: 0,
+            fps: 0,
+            // 딜레이 효과를 위한 포즈 히스토리
+            poseHistory: [],
+            handHistory: [],
+            delayFrames: 15  // 15프레임 딜레이 (약 250ms at 60fps)
+        };
+
+        const elements = {
+            video: document.getElementById('video'),
+            canvas: document.getElementById('canvas'),
+            loading: document.getElementById('loading'),
+            error: document.getElementById('error'),
+            startBtn: document.getElementById('startBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            cameraStatus: document.getElementById('cameraStatus'),
+            poseStatus: document.getElementById('poseStatus'),
+            handStatus: document.getElementById('handStatus'),
+            poseDetect: document.getElementById('poseDetect'),
+            handDetect: document.getElementById('handDetect'),
+            fps: document.getElementById('fps')
+        };
+
+        // 에러 표시
+        function showError(message) {
+            elements.error.textContent = '⚠️ ' + message;
+            elements.error.classList.add('show');
+            console.error(message);
+        }
+
+        function hideError() {
+            elements.error.classList.remove('show');
+        }
+
+        // 모델 초기화
+        async function initModels() {
+            try {
+                // TensorFlow.js 준비
+                await tf.setBackend('webgl');
+                await tf.ready();
+
+                // MoveNet 포즈 감지
+                const poseDetector = await poseDetection.createDetector(
+                    poseDetection.SupportedModels.MoveNet,
+                    { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+                );
+                state.detector = poseDetector;
+                elements.poseStatus.textContent = '✅ 준비 완료';
+
+                // MediaPipe 손 감지 초기화
+                const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
+                const FilesetResolver = vision.FilesetResolver;
+                const HandLandmarker = vision.HandLandmarker;
+
+                const handDetector = await HandLandmarker.createFromOptions(
+                    await FilesetResolver.forVisionTasks(
+                        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm'
+                    ),
+                    {
+                        baseOptions: {
+                            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
+                        },
+                        runningMode: 'VIDEO',
+                        numHands: 2  // 👈 양손 감지 설정 추가
+                    }
+                );
+                state.handDetector = handDetector;
+                elements.handStatus.textContent = '✅ 준비 완료';
+
+                hideError();
+                elements.loading.style.display = 'none';
+                return true;
+            } catch (error) {
+                showError('모델 로드 실패: ' + error.message);
+                elements.loading.style.display = 'none';
+                return false;
+            }
+        }
+
+        // 카메라 시작
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+                    audio: false
+                });
+                elements.video.srcObject = stream;
+                elements.cameraStatus.textContent = '✅ 연결됨';
+                state.isRunning = true;
+                elements.startBtn.disabled = true;
+                elements.stopBtn.disabled = false;
+
+                // 비디오 재생 대기
+                await new Promise(resolve => {
+                    elements.video.onloadedmetadata = () => {
+                        elements.video.play();
+                        resolve();
+                    };
+                });
+
+                // Canvas 크기 설정
+                elements.canvas.width = elements.video.videoWidth;
+                elements.canvas.height = elements.video.videoHeight;
+
+                detectFrame();
+            } catch (error) {
+                showError('카메라 접근 실패: ' + error.message);
+                elements.cameraStatus.textContent = '❌ 실패';
+            }
+        }
+
+        // 카메라 중지
+        function stopCamera() {
+            state.isRunning = false;
+            if (elements.video.srcObject) {
+                elements.video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            elements.cameraStatus.textContent = '❌ 중지됨';
+            elements.poseDetect.textContent = '⏳ 대기';
+            elements.handDetect.textContent = '⏳ 대기';
+            elements.startBtn.disabled = false;
+            elements.stopBtn.disabled = true;
+        }
+
+        // 프레임 감지
+        async function detectFrame() {
+            if (!state.isRunning || !elements.video.videoWidth) {
+                requestAnimationFrame(detectFrame);
+                return;
+            }
+
+            try {
+                // 포즈 감지
+                if (state.detector && elements.video.readyState === HTMLMediaElement.HAVE_ENOUGH_DATA) {
+                    const poses = await state.detector.estimatePoses(elements.video, { flipHorizontal: true });
+                    state.poses = poses.length > 0 ? poses[0] : null;
+                    elements.poseDetect.textContent = state.poses ? '✅ 감지 중' : '⏳ 대기';
+                }
+
+                // 손 감지
+                if (state.handDetector) {
+                    const detectionResult = state.handDetector.detectForVideo(elements.video, performance.now());
+                    state.hands = detectionResult.landmarks && detectionResult.landmarks.length > 0 ? detectionResult.landmarks : null;
+                    elements.handDetect.textContent = state.hands && state.hands.length > 0 ? `✅ ${state.hands.length}손` : '⏳ 대기';
+                }
+
+                // 히스토리에 현재 포즈/손 저장
+                state.poseHistory.push(state.poses);
+                state.handHistory.push(state.hands);
+
+                // 히스토리 크기 유지 (메모리 절약)
+                if (state.poseHistory.length > state.delayFrames + 5) {
+                    state.poseHistory.shift();
+                    state.handHistory.shift();
+                }
+
+                // 그리기 (딜레이된 데이터 사용)
+                drawFrame();
+
+                // FPS 계산
+                state.frameCount++;
+                const now = Date.now();
+                if (now - state.lastFrameTime >= 1000) {
+                    state.fps = state.frameCount;
+                    elements.fps.textContent = state.fps + ' fps';
+                    state.frameCount = 0;
+                    state.lastFrameTime = now;
+                }
+            } catch (error) {
+                console.error('Detection error:', error);
+            }
+
+            requestAnimationFrame(detectFrame);
+        }
+
+        // 프레임 그리기
+        function drawFrame() {
+            const ctx = elements.canvas.getContext('2d');
+
+            // 비디오 그리기 (좌우 반전)
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.drawImage(elements.video, -elements.canvas.width, 0, elements.canvas.width, elements.canvas.height);
+            ctx.restore();
+
+            // 히스토리에서 딜레이된 포즈/손 데이터 가져오기
+            let delayedPoses = null;
+            let delayedHands = null;
+
+            if (state.poseHistory.length >= state.delayFrames) {
+                const poseIndex = state.poseHistory.length - state.delayFrames;
+                delayedPoses = state.poseHistory[poseIndex];
+            }
+
+            if (state.handHistory.length >= state.delayFrames) {
+                const handIndex = state.handHistory.length - state.delayFrames;
+                delayedHands = state.handHistory[handIndex];
+            }
+
+            // 포즈 그리기 (딜레이된 데이터 사용)
+            if (delayedPoses && delayedPoses.keypoints) {
+                drawPose(ctx, delayedPoses.keypoints);
+            }
+
+            // 손 그리기 (딜레이된 데이터 사용, 양손 지원)
+            if (delayedHands && delayedHands.length > 0) {
+                delayedHands.forEach((hand, idx) => drawHand(ctx, hand, idx));
+            }
+        }
+
+        // 포즈 뼈대 그리기 (뼈대만 표시)
+        function drawPose(ctx, keypoints) {
+            const connections = [
+                // 얼굴
+                [0, 1], [0, 2], [1, 3], [2, 4],
+                // 팔
+                [5, 6],    // 양쪽 어깨
+                [5, 7],    // 왼쪽 어깨 → 팔꿈치
+                [7, 9],    // 왼쪽 팔꿈치 → 손목
+                [6, 8],    // 오른쪽 어깨 → 팔꿈치
+                [8, 10],   // 오른쪽 팔꿈치 → 손목
+                // 몸통
+                [5, 11], [6, 12], [11, 12],
+                // 다리
+                [11, 13], [13, 15],  // 왼쪽 다리
+                [12, 14], [14, 16]   // 오른쪽 다리
+            ];
+
+            const MIN_CONFIDENCE = 0.3;
+
+            // 뼈대 선 그리기
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.9)';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            connections.forEach(([from, to]) => {
+                const fromKp = keypoints[from];
+                const toKp = keypoints[to];
+
+                if (fromKp && toKp && fromKp.score > MIN_CONFIDENCE && toKp.score > MIN_CONFIDENCE) {
+                    ctx.beginPath();
+                    ctx.moveTo(fromKp.x, fromKp.y);
+                    ctx.lineTo(toKp.x, toKp.y);
+                    ctx.stroke();
+                }
+            });
+
+            // 관절 점 그리기
+            keypoints.forEach((kp, idx) => {
+                if (kp.score > MIN_CONFIDENCE) {
+                    // 신뢰도에 따른 색상
+                    if (kp.score > 0.7) {
+                        ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+                    } else if (kp.score > 0.5) {
+                        ctx.fillStyle = 'rgba(255, 165, 0, 0.7)';
+                    } else {
+                        ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+                    }
+
+                    const radius = idx < 5 ? 5 : 7;
+                    ctx.beginPath();
+                    ctx.arc(kp.x, kp.y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        // 손 그리기
+        function drawHand(ctx, hand, handIndex) {
+            const connections = [
+                [0, 1], [1, 2], [2, 3], [3, 4],
+                [0, 5], [5, 6], [6, 7], [7, 8],
+                [5, 9], [9, 10], [10, 11], [11, 12],
+                [9, 13], [13, 14], [14, 15], [15, 16],
+                [13, 17], [17, 18], [18, 19], [19, 20]
+            ];
+
+            const MIN_CONFIDENCE = 0.1;
+            let validLandmarks = 0;
+
+            // 손가락 뼈대
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            connections.forEach(([from, to]) => {
+                const fromLm = hand[from];
+                const toLm = hand[to];
+
+                if (fromLm && toLm &&
+                    (fromLm.z !== undefined || true) &&
+                    (toLm.z !== undefined || true)) {
+                    // 정규화된 좌표를 캔버스 좌표로 변환 (좌우 반전 고려)
+                    const fromX = fromLm.x * elements.canvas.width;
+                    const fromY = fromLm.y * elements.canvas.height;
+                    const toX = toLm.x * elements.canvas.width;
+                    const toY = toLm.y * elements.canvas.height;
+
+                    if (fromX >= 0 && fromX <= elements.canvas.width && fromY >= 0 && fromY <= elements.canvas.height &&
+                        toX >= 0 && toX <= elements.canvas.width && toY >= 0 && toY <= elements.canvas.height) {
+                        ctx.beginPath();
+                        ctx.moveTo(fromX, fromY);
+                        ctx.lineTo(toX, toY);
+                        ctx.stroke();
+                    }
+                }
+            });
+
+            // 손가락 관절 점
+            hand.forEach((lm, idx) => {
+                if (lm.x !== undefined && lm.y !== undefined) {
+                    const x = lm.x * elements.canvas.width;
+                    const y = lm.y * elements.canvas.height;
+
+                    // 손가락 끝 (idx 4, 8, 12, 16, 20)은 더 큼
+                    const isFingertip = [4, 8, 12, 16, 20].includes(idx);
+                    const radius = isFingertip ? 6 : 4;
+
+                    // 신뢰도에 따른 색상
+                    const confidence = lm.z || 1;
+                    if (confidence > 0.7) {
+                        ctx.fillStyle = 'rgba(0, 255, 255, 0.9)';
+                    } else {
+                        ctx.fillStyle = 'rgba(0, 200, 255, 0.7)';
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    validLandmarks++;
+                }
+            });
+
+            if (validLandmarks > 0) {
+                console.log(`손${handIndex + 1}: ${validLandmarks}/21 랜드마크 감지`);
+            }
+        }
+
+        // 이벤트 리스너
+        elements.startBtn.addEventListener('click', async () => {
+            if (!state.detector || !state.handDetector) {
+                showError('모델이 아직 준비되지 않았습니다');
+                return;
+            }
+            startCamera();
+        });
+
+        elements.stopBtn.addEventListener('click', stopCamera);
+
+        // 초기화
+        async function init() {
+            elements.stopBtn.disabled = true;
+            const success = await initModels();
+            if (!success) {
+                elements.loading.style.display = 'block';
+                setTimeout(() => {
+                    elements.loading.style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', init);
+
+        // 언마운트 시 정리
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+        });
+    </script>
+</body>
+</html>
