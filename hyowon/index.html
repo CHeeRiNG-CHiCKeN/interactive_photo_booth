@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 포토부스</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="bg-white text-black min-h-screen overflow-hidden" id="app">
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 1: 시작 화면                                           -->
+  <!-- ============================================================ -->
+  <section id="screen-start" class="screen active">
+    <div class="flex flex-col items-center justify-center min-h-screen gap-12 px-6">
+
+      <!-- 로고 영역 -->
+      <div class="text-center space-y-4">
+        <div class="logo-mark text-xs tracking-[0.5em] text-gray-400 uppercase mb-6">AI Photo Booth</div>
+        <h1 class="logo-text text-5xl font-light tracking-tight leading-none">
+          AI <span class="font-bold">PhotoBooth</span>
+        </h1>
+        <p class="text-sm text-gray-400 tracking-widest mt-4">당신의 순간을 특별하게</p>
+      </div>
+
+      <!-- 구분선 -->
+      <div class="w-px h-16 bg-gray-200"></div>
+
+      <!-- START 버튼 -->
+      <button
+        id="btn-start"
+        class="start-btn group border border-black px-12 py-4 text-sm font-medium tracking-[0.3em] uppercase hover:bg-black hover:text-white transition-all duration-300"
+      >
+        START
+        <span class="inline-block ml-2 transition-transform duration-300 group-hover:translate-x-1">→</span>
+      </button>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 2: 캐릭터 선택                                         -->
+  <!-- ============================================================ -->
+  <section id="screen-character-select" class="screen">
+    <div class="flex flex-col items-center min-h-screen px-6 pt-16 pb-10 gap-10">
+
+      <!-- 헤더 -->
+      <div class="text-center space-y-2">
+        <p class="text-xs tracking-[0.4em] text-gray-400 uppercase">Step 1</p>
+        <h2 class="text-2xl font-light tracking-tight">캐릭터를 선택해주세요</h2>
+      </div>
+
+      <!-- 캐릭터 카드 (여자 / 남자) -->
+      <div class="flex gap-6 w-full max-w-sm justify-center">
+
+        <!-- 여자 캐릭터 -->
+        <button
+          class="character-card group relative flex-1 rounded-2xl border border-gray-100 bg-gray-50 overflow-hidden flex flex-col items-center justify-end p-6 transition-all duration-200 hover:border-yellow-400 hover:scale-105 hover:shadow-xl"
+          style="min-height: 200px;"
+          data-character="female"
+        >
+          <div class="character-emoji text-7xl mb-3 group-hover:scale-110 transition-transform duration-200">👩</div>
+          <div class="character-bg absolute inset-0 bg-gradient-to-b from-pink-50 to-rose-100 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style="z-index:0"></div>
+          <div class="relative" style="z-index:1">
+            <span class="block text-sm font-medium tracking-widest text-gray-700 group-hover:text-black">FEMALE</span>
+            <span class="block text-xs text-gray-400 mt-0.5 tracking-wider">여자</span>
+          </div>
+          <span class="selected-badge absolute top-3 right-3 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-xs hidden">✓</span>
+        </button>
+
+        <!-- 남자 캐릭터 -->
+        <button
+          class="character-card group relative flex-1 rounded-2xl border border-gray-100 bg-gray-50 overflow-hidden flex flex-col items-center justify-end p-6 transition-all duration-200 hover:border-yellow-400 hover:scale-105 hover:shadow-xl"
+          style="min-height: 200px;"
+          data-character="male"
+        >
+          <div class="character-emoji text-7xl mb-3 group-hover:scale-110 transition-transform duration-200">👨</div>
+          <div class="character-bg absolute inset-0 bg-gradient-to-b from-blue-50 to-sky-100 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style="z-index:0"></div>
+          <div class="relative" style="z-index:1">
+            <span class="block text-sm font-medium tracking-widest text-gray-700 group-hover:text-black">MALE</span>
+            <span class="block text-xs text-gray-400 mt-0.5 tracking-wider">남자</span>
+          </div>
+          <span class="selected-badge absolute top-3 right-3 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-xs hidden">✓</span>
+        </button>
+
+      </div>
+
+      <!-- 다음 버튼 (캐릭터 선택 후 활성화) -->
+      <button
+        id="btn-confirm-character"
+        class="w-full max-w-sm py-4 text-sm font-medium tracking-widest uppercase bg-black text-white disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all duration-300"
+        disabled
+      >
+        선택 완료
+      </button>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 3: 초기 로딩                                           -->
+  <!-- ============================================================ -->
+  <section id="screen-loading" class="screen">
+    <div class="flex flex-col items-center justify-center min-h-screen gap-8">
+
+      <!-- 로딩 스피너 -->
+      <div class="loading-spinner"></div>
+
+      <!-- 텍스트 -->
+      <div class="text-center space-y-2">
+        <p class="text-lg font-light tracking-tight">잠시만 기다려줘</p>
+        <p class="text-xs text-gray-400 tracking-widest">AI가 준비 중이에요</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 4: 메인 스튜디오                                        -->
+  <!-- ============================================================ -->
+  <section id="screen-studio" class="screen">
+    <div class="flex flex-col items-center min-h-screen px-4 pt-4 pb-6 gap-4">
+
+      <!-- 상단 바 -->
+      <div class="w-full max-w-lg flex items-center justify-between">
+
+        <!-- 좌측: 촬영 카운터 -->
+        <div class="flex items-center gap-2">
+          <div class="flex gap-1">
+            <span class="shot-dot w-2 h-2 rounded-full bg-gray-200" data-index="0"></span>
+            <span class="shot-dot w-2 h-2 rounded-full bg-gray-200" data-index="1"></span>
+            <span class="shot-dot w-2 h-2 rounded-full bg-gray-200" data-index="2"></span>
+            <span class="shot-dot w-2 h-2 rounded-full bg-gray-200" data-index="3"></span>
+          </div>
+          <span id="shot-counter" class="text-sm font-medium tracking-wider text-gray-700">1 / 4</span>
+        </div>
+
+        <!-- 우측: 선택된 캐릭터 -->
+        <div class="flex items-center gap-2 text-xs text-gray-400">
+          <span id="selected-char-label">🤖 Robot</span>
+        </div>
+
+      </div>
+
+      <!-- 모드 전환 토글 (상단 중앙) -->
+      <div class="mode-toggle flex items-center bg-gray-100 rounded-full p-1 gap-1">
+        <button
+          id="btn-mode-char"
+          class="mode-btn active px-5 py-2 rounded-full text-xs font-medium tracking-wider transition-all duration-200"
+          data-mode="character"
+        >
+          🎭 캐릭터 모드
+        </button>
+        <button
+          id="btn-mode-deco"
+          class="mode-btn px-5 py-2 rounded-full text-xs font-medium tracking-wider transition-all duration-200"
+          data-mode="decoration"
+        >
+          🎨 꾸미기 모드
+        </button>
+      </div>
+
+      <!-- 웹캠 컨테이너 (4:3 비율) -->
+      <div class="webcam-container relative w-full max-w-lg" style="aspect-ratio: 4/3;">
+
+        <!-- 웹캠 비디오 -->
+        <video
+          id="webcam-video"
+          autoplay
+          playsinline
+          muted
+          class="w-full h-full object-cover rounded-2xl bg-gray-900"
+        ></video>
+
+        <!-- 드로잉 캔버스 (꾸미기 모드) -->
+        <canvas
+          id="draw-canvas"
+          class="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
+        ></canvas>
+
+        <!-- 타이머 오버레이 -->
+        <div id="timer-overlay" class="absolute inset-0 flex items-center justify-center hidden">
+          <div class="timer-circle">
+            <svg class="timer-svg" viewBox="0 0 100 100">
+              <circle class="timer-track" cx="50" cy="50" r="42" />
+              <circle id="timer-progress" class="timer-bar" cx="50" cy="50" r="42" />
+            </svg>
+            <span id="timer-count" class="timer-number">10</span>
+          </div>
+        </div>
+
+        <!-- 촬영 플래시 효과 -->
+        <div id="capture-flash" class="absolute inset-0 rounded-2xl bg-white opacity-0 pointer-events-none"></div>
+
+        <!-- 웹캠 로딩 표시 -->
+        <div id="webcam-loading" class="absolute inset-0 rounded-2xl bg-gray-900 flex items-center justify-center">
+          <div class="text-center text-white space-y-3">
+            <div class="loading-spinner-sm"></div>
+            <p class="text-xs text-gray-400 tracking-wider">카메라 연결 중...</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 하단 UI: 모드에 따라 변경 -->
+
+      <!-- 캐릭터 모드 하단 버튼 -->
+      <div id="char-mode-ui" class="flex gap-3 w-full max-w-lg">
+        <button
+          id="btn-pose-suggest"
+          class="flex-1 border border-gray-200 rounded-xl py-3 text-xs font-medium tracking-wider hover:border-black hover:bg-black hover:text-white transition-all duration-200"
+        >
+          추천 포즈
+        </button>
+        <button
+          id="btn-pose-follow"
+          class="flex-1 border border-gray-200 rounded-xl py-3 text-xs font-medium tracking-wider hover:border-black hover:bg-black hover:text-white transition-all duration-200"
+        >
+          따라하기
+        </button>
+      </div>
+
+      <!-- 꾸미기 모드 하단 툴바 -->
+      <div id="deco-mode-ui" class="hidden w-full max-w-lg">
+
+        <!-- 드로잉 / 스티커 탭 -->
+        <div class="flex bg-gray-100 rounded-full p-1 mb-3">
+          <button
+            id="btn-tab-draw"
+            class="deco-tab flex-1 py-2 rounded-full text-xs font-medium tracking-wider transition-all"
+            data-tab="draw"
+          >
+            🖌️ 드로잉
+          </button>
+          <button
+            id="btn-tab-sticker"
+            class="deco-tab flex-1 py-2 rounded-full text-xs font-medium tracking-wider transition-all"
+            data-tab="sticker"
+          >
+            🏷️ 스티커
+          </button>
+        </div>
+
+        <!-- 드로잉 툴 -->
+        <div id="draw-tools" class="flex items-center justify-between px-2">
+          <div class="flex gap-2">
+            <button class="color-btn w-7 h-7 rounded-full bg-sky-400 ring-2 ring-offset-1 ring-transparent hover:ring-sky-400 transition-all" data-color="#38bdf8"></button>
+            <button class="color-btn w-7 h-7 rounded-full bg-pink-400 ring-2 ring-offset-1 ring-transparent hover:ring-pink-400 transition-all" data-color="#f472b6"></button>
+            <button class="color-btn w-7 h-7 rounded-full bg-yellow-400 ring-2 ring-offset-1 ring-transparent hover:ring-yellow-400 transition-all" data-color="#facc15"></button>
+            <button class="color-btn w-7 h-7 rounded-full bg-white border border-gray-200 ring-2 ring-offset-1 ring-transparent hover:ring-gray-400 transition-all" data-color="#ffffff"></button>
+          </div>
+          <button id="btn-clear-draw" class="text-xs text-gray-400 hover:text-black underline underline-offset-2 transition-colors">초기화</button>
+        </div>
+
+        <!-- 스티커 툴 (기본 숨김) -->
+        <div id="sticker-tools" class="hidden flex gap-3 justify-center">
+          <button class="sticker-btn text-3xl hover:scale-125 transition-transform" data-sticker="❤️">❤️</button>
+          <button class="sticker-btn text-3xl hover:scale-125 transition-transform" data-sticker="⭐">⭐</button>
+          <button class="sticker-btn text-3xl hover:scale-125 transition-transform" data-sticker="🍔">🍔</button>
+          <button class="sticker-btn text-3xl hover:scale-125 transition-transform" data-sticker="😸">😸</button>
+          <button class="sticker-btn text-3xl hover:scale-125 transition-transform" data-sticker="🌸">🌸</button>
+        </div>
+
+      </div>
+
+      <!-- 촬영 버튼 (항상 하단 중앙) -->
+      <div class="flex flex-col items-center gap-3 w-full max-w-lg">
+
+        <button
+          id="btn-capture"
+          class="capture-btn w-full py-4 bg-black text-white text-sm font-medium tracking-widest uppercase rounded-xl hover:bg-gray-900 active:scale-95 transition-all duration-150"
+        >
+          📸 촬영하기 (10초 타이머)
+        </button>
+
+        <!-- 인쇄 버튼 (4장 완료 후 활성화) -->
+        <button
+          id="btn-print"
+          class="w-full py-3 border border-gray-200 text-gray-300 text-sm font-medium tracking-widest uppercase rounded-xl cursor-not-allowed transition-all duration-300"
+          disabled
+        >
+          인쇄하기 →
+        </button>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 5: 렌더링 로딩                                         -->
+  <!-- ============================================================ -->
+  <section id="screen-rendering" class="screen">
+    <div class="flex flex-col items-center justify-center min-h-screen gap-10">
+
+      <!-- 4컷 미리보기 (합성 중 표시) -->
+      <div class="grid grid-cols-2 gap-2 w-48">
+        <div class="rendering-frame aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
+          <div class="rendering-fill bg-gray-300 h-full animate-pulse"></div>
+        </div>
+        <div class="rendering-frame aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
+          <div class="rendering-fill bg-gray-300 h-full animate-pulse" style="animation-delay: 0.2s"></div>
+        </div>
+        <div class="rendering-frame aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
+          <div class="rendering-fill bg-gray-300 h-full animate-pulse" style="animation-delay: 0.4s"></div>
+        </div>
+        <div class="rendering-frame aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden">
+          <div class="rendering-fill bg-gray-300 h-full animate-pulse" style="animation-delay: 0.6s"></div>
+        </div>
+      </div>
+
+      <!-- Printing 텍스트 -->
+      <div class="text-center space-y-2">
+        <p id="printing-text" class="text-2xl font-light tracking-[0.4em] uppercase">Printing</p>
+        <p class="text-xs text-gray-400 tracking-widest">4컷 사진을 만들고 있어요</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================ -->
+  <!-- SCREEN 6: 결과물 공유                                         -->
+  <!-- ============================================================ -->
+  <section id="screen-result" class="screen">
+    <div class="flex flex-col items-center min-h-screen px-6 pt-12 pb-10 gap-8">
+
+      <!-- 헤더 -->
+      <div class="text-center space-y-1">
+        <p class="text-xs tracking-[0.4em] text-gray-400 uppercase">Complete</p>
+        <h2 class="text-2xl font-light tracking-tight">네컷이 완성됐어요!</h2>
+      </div>
+
+      <!-- 최종 네컷 사진 (2x2 그리드) -->
+      <div class="photo-strip w-full max-w-xs">
+        <!-- 흰 배경 포토부스 프레임 -->
+        <div class="bg-white border border-gray-100 shadow-2xl rounded-xl p-3 space-y-1">
+          <div class="grid grid-cols-2 gap-1">
+            <div class="result-frame aspect-[3/4] bg-gray-100 rounded overflow-hidden">
+              <img id="result-photo-1" src="" alt="사진 1" class="w-full h-full object-cover hidden" />
+            </div>
+            <div class="result-frame aspect-[3/4] bg-gray-100 rounded overflow-hidden">
+              <img id="result-photo-2" src="" alt="사진 2" class="w-full h-full object-cover hidden" />
+            </div>
+            <div class="result-frame aspect-[3/4] bg-gray-100 rounded overflow-hidden">
+              <img id="result-photo-3" src="" alt="사진 3" class="w-full h-full object-cover hidden" />
+            </div>
+            <div class="result-frame aspect-[3/4] bg-gray-100 rounded overflow-hidden">
+              <img id="result-photo-4" src="" alt="사진 4" class="w-full h-full object-cover hidden" />
+            </div>
+          </div>
+          <!-- 포토부스 브랜딩 -->
+          <p class="text-center text-[10px] tracking-[0.3em] text-gray-400 uppercase pt-1">AI Photoism</p>
+        </div>
+      </div>
+
+      <!-- 다운로드 및 공유 버튼 -->
+      <div class="flex flex-col gap-3 w-full max-w-xs">
+
+        <button
+          id="btn-download-photo"
+          class="w-full py-4 bg-black text-white text-xs font-medium tracking-widest uppercase rounded-xl hover:bg-gray-900 transition-all"
+        >
+          이미지 다운로드
+        </button>
+
+        <button
+          id="btn-download-reels"
+          class="w-full py-3 border border-gray-200 text-sm tracking-wider hover:border-black hover:bg-black hover:text-white transition-all duration-200 rounded-xl"
+        >
+          릴스 다운로드
+        </button>
+
+      </div>
+
+      <!-- QR 코드 영역 -->
+      <div class="flex flex-col items-center gap-3">
+        <p class="text-xs text-gray-400 tracking-widest">QR로 공유하기</p>
+        <div id="qr-box" class="w-28 h-28 border border-gray-200 rounded-xl flex items-center justify-center bg-gray-50">
+          <span class="text-xs text-gray-300">QR</span>
+        </div>
+      </div>
+
+      <!-- 다시 촬영 -->
+      <button
+        id="btn-restart"
+        class="text-xs text-gray-400 hover:text-black underline underline-offset-4 tracking-wider transition-colors"
+      >
+        다시 촬영하기
+      </button>
+
+    </div>
+  </section>
+
+
+  <!-- 숨겨진 캔버스: 사진 합성용 -->
+  <canvas id="composite-canvas" class="hidden"></canvas>
+
+  <script src="main.js"></script>
+</body>
+</html>

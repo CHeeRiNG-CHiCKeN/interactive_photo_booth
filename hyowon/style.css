@@ -1,0 +1,197 @@
+/* ============================================================
+   AI Photoism — Custom CSS
+   Tailwind CDN이 담당하지 못하는 애니메이션/커스텀 요소만 담당
+   ============================================================ */
+
+/* --- 기본 폰트 --- */
+body {
+  font-family: 'DM Sans', 'Noto Sans KR', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- 화면 전환 시스템 --- */
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  animation: fadeIn 0.35s ease;
+}
+
+.screen.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 시작 화면 로고 --- */
+.logo-text {
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -0.03em;
+}
+
+/* --- 로딩 스피너 (SCREEN 3) --- */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #111827;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner-sm {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- 캐릭터 카드 선택 상태 --- */
+.character-card.selected {
+  border-color: #facc15;
+  transform: scale(1.05);
+  box-shadow: 0 10px 30px rgba(250, 204, 21, 0.3);
+}
+
+.character-card.selected .selected-badge {
+  display: flex;
+}
+
+/* --- 모드 토글 버튼 --- */
+.mode-btn {
+  color: #9ca3af;
+  background: transparent;
+}
+
+.mode-btn.active {
+  background: #111827;
+  color: #ffffff;
+}
+
+/* --- 꾸미기 탭 --- */
+.deco-tab {
+  color: #9ca3af;
+}
+
+.deco-tab.active {
+  background: #111827;
+  color: #ffffff;
+}
+
+/* --- 웹캠 컨테이너 --- */
+.webcam-container {
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+/* --- 촬영 카운터 점 --- */
+.shot-dot {
+  transition: background-color 0.3s ease;
+}
+
+.shot-dot.taken {
+  background-color: #111827;
+}
+
+.shot-dot.current {
+  background-color: #facc15;
+}
+
+/* --- 타이머 원형 (SCREEN 4) --- */
+.timer-circle {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.2);
+  stroke-width: 4;
+}
+
+.timer-bar {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 263.9;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.timer-number {
+  position: relative;
+  z-index: 1;
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* --- 촬영 플래시 --- */
+#capture-flash {
+  transition: opacity 0.1s ease;
+  pointer-events: none;
+}
+
+#capture-flash.flash {
+  animation: flash 0.4s ease-out;
+}
+
+@keyframes flash {
+  0%   { opacity: 0; }
+  20%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+/* --- 촬영 버튼 펄스 --- */
+.capture-btn:not(:disabled):hover {
+  box-shadow: 0 0 0 4px rgba(17,24,39,0.15);
+}
+
+/* --- Printing 깜빡임 (SCREEN 5) --- */
+#printing-text {
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+/* --- 결과 사진 프레임 그림자 --- */
+.photo-strip {
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.12));
+}
+
+/* --- 스크롤바 숨기기 --- */
+.screen::-webkit-scrollbar {
+  display: none;
+}
+.screen {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
