@@ -111,8 +111,8 @@ body {
 /* --- 타이머 원형 (SCREEN 4) --- */
 .timer-circle {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,15 +127,15 @@ body {
 }
 
 .timer-track {
-  fill: none;
-  stroke: rgba(255,255,255,0.2);
-  stroke-width: 4;
+  fill: rgba(0,0,0,0.35);
+  stroke: rgba(255,255,255,0.25);
+  stroke-width: 5;
 }
 
 .timer-bar {
   fill: none;
   stroke: #ffffff;
-  stroke-width: 4;
+  stroke-width: 5;
   stroke-linecap: round;
   stroke-dasharray: 263.9;
   stroke-dashoffset: 0;
@@ -145,8 +145,8 @@ body {
 .timer-number {
   position: relative;
   z-index: 1;
-  font-size: 2.5rem;
-  font-weight: 300;
+  font-size: 1.1rem;
+  font-weight: 500;
   color: #ffffff;
   font-family: 'DM Sans', sans-serif;
 }
