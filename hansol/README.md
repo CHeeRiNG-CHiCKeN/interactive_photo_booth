@@ -2,53 +2,43 @@
 
 # 📸 AI Photo Booth - Four Cuts Frame Merger (5/30)
 
-[cite_start]본 모듈은 AI 인터랙티브 포토부스 프로젝트에서 **4분할 사진(네 컷 사진) 형태로 최종 이미지를 병합하고 파일로 내보내는 핵심 백엔드 기능**을 담당합니다[cite: 47, 48]. [cite_start]촬영되거나 AI 변환(ComfyUI)을 거친 개별 사진들을 입력받아 EXIF 방향 보정, 자동 중앙 비율 크롭, 동적 하드코딩 없는 Y축 좌표 연산을 통해 9:16 비율의 배경 프레임 레이어 위에 정교하게 합성합니다[cite: 51, 114, 142, 207].
+본 모듈은 AI 포토부스 프로젝트에서 촬영 및 변환이 완료된 **개별 사진 4장을 하나의 네 컷 프레임 이미지로 자동 병합**하는 핵심 백엔드 기능이다. 
 
 ---
 
-## ✨ 핵심 기능 및 구현 세부 로직 (Key Features & Logic)
+## ✨ 핵심 기능 (Key Features)
 
-### 1. 멀티 인풋 대응 이미지 로더 (`image_loader.py`)
-- [cite_start]**인풋 소스 이원화 대응**: 로컬 개발 테스트를 위한 파일 경로(`str`) 기반 로더와 실제 웹 서버 및 API 환경에서 클라이언트가 전송한 바이너리 데이터(`bytes`)를 처리하는 인메모리(`io.BytesIO`) 로더를 모두 지원합니다[cite: 61, 62, 86, 87].
-- [cite_start]**엄격한 수량 검증기 (Strict Validator)**: 입력되는 이미지 리스트의 개수가 **정확히 4장**이 아닐 경우 파이프라인을 즉시 중단하고 예외(`ValueError`)를 발생시켜 비정상 출력을 원천 차단합니다[cite: 75, 78, 79, 99, 100, 101].
+### 1. 멀티 인풋 이미지 로더 (`image_loader.py`)
+- **듀얼 소스 로드**: 로컬 파일 경로(`str`) 및 서버 API 전송용 바이너리 데이터(`bytes`) 모두 지원
+- **엄격한 수량 검증**: 입력된 사진이 정확히 4장이 아닐 경우 예외(`ValueError`) 처리
 
-### 2. 수학적 좌표 계산 및 컴포징 (`frame_merger.py`)
-- [cite_start]**EXIF 메타데이터 기반 자동 정방향 회전 (`fix_orientation`)**: 모바일 기기나 웹캠 촬영 시 셋팅에 따라 사진이 누워 나오는 현상을 해결하기 위해, 이미지의 EXIF Orientation 태그를 파싱하여 `3(180도)`, `6(270도)`, `8(90도)` 회전 연산을 자동 수행합니다[cite: 114, 125, 129, 133].
-- [cite_start]**지능형 가로/세로 비율 크롭 (`crop_to_fit`)**: 원본 이미지의 종횡비($\text{src\_ratio}$)와 출력 타겟 프레임 창의 종횡비($\text{tgt\_ratio}$)를 비교 분석하여 이미지가 상하좌우로 찌그러지는 현상을 방지합니다[cite: 142, 145, 146].
-  - [cite_start]$\text{src\_ratio} > \text{tgt\_ratio}$ (좌우 여백 발생 시): 높이를 맞추고 좌우를 자름[cite: 147, 149].
-  - [cite_start]$\text{src\_ratio} \le \text{tgt\_ratio}$ (상하 여백 발생 시): 너비를 맞추고 상하를 자름[cite: 148, 151].
-  - [cite_start]잘라낸 후에는 `LANCZOS` 보간법 필터를 사용하여 화질 손실을 최소화하며 픽셀 리사이징을 수행합니다[cite: 160, 161].
-- [cite_start]**동적 사진 높이 및 Y축 좌표 연산 (`merge_four_cuts`)**: 프레임 디자인의 가로/세로 전체 크기가 바뀌더라도 상하좌우 여백 값만 주어지면 내부 사진 높이($\text{photo\_h}$)와 개별 Y 좌표($\text{current\_y}$)를 아래 공식을 통해 **동적으로 자동 계산**하므로 고정 픽셀 값을 사용하지 않습니다[cite: 196, 197, 200, 203, 214].
+### 2. 수학적 비율 보정 및 병합 (`frame_merger.py`)
+- **EXIF 회전 보정**: 메타데이터(Orientation)를 파싱하여 누워 있는 사진을 정방향으로 자동 회전
+- **지능형 중앙 크롭**: 원본 종횡비와 프레임 창 비율을 비교 계산하여 찌그러짐 없는 최적의 Center Crop 적용
+- **동적 Y축 좌표 연산**: 고정 픽셀(하드코딩) 없이 상하좌우 여백과 간격을 기반으로 부착 위치 및 높이 자동 계산
+- **촬영 일자 각인**: EXIF 데이터에서 촬영 날짜를 추출하여 프레임 하단에 텍스트 인쇄
 
-$$\text{photo\_h} = \frac{\text{frame\_h} - \text{margin\_top} - \text{margin\_bottom} - (\text{gap} \times 3)}{4}$$
-
-$$\text{current\_y} = \text{margin\_top} + i \times (\text{photo\_h} + \text{gap}) \quad (i = 0, 1, 2, 3)$$
-
-- [cite_start]**스마트 촬영 일자 각인 및 자동 폰트 폴백**: 사진의 EXIF 정보에서 실제 촬영 일자(태그 ID `36867` 또는 `306`)를 내장 파싱하여 출력합니다[cite: 164, 169, 170]. [cite_start]만약 데이터가 유실되었을 경우 오늘 날짜로 자동 대체하며 [cite: 181, 182][cite_start], 시스템 내에 나눔고딕/맑은고딕 폰트가 없을 경우 `load_default()`로 폴백되어 폰트 누락으로 인한 서버 다운을 방지합니다[cite: 224, 225, 226].
-
-### 3. 포맷별 알파 채널 마스킹 익스포터 (`result_saver.py`)
-- [cite_start]**JPEG 알파 채널 손실 보정**: 투명도 레이어가 있는 `RGBA` 이미지를 `JPEG`로 바로 변환할 때 배경이 검은색으로 깨지는 현상을 방지하기 위해, 지정된 튜플 값(기본값: 순수 흰색 `255, 255, 255`)의 단색 배경 객체를 먼저 생성한 뒤 원본의 알파 채널을 마스크 채널(`split()[3]`)로 삼아 덮어씌우는 재합성 과정을 거쳐 저장합니다[cite: 246, 253, 254, 255, 256].
-- [cite_start]**PNG 무손실 투명도 보존**: 확장자가 `.png`일 경우 레이어 투명도를 그대로 살려 무손실 포맷으로 안전하게 저장 및 출력 분기를 태웁니다[cite: 262, 263, 265].
+### 3. 알파 채널 보존 익스포터 (`result_saver.py`)
+- **JPEG 알파 깨짐 방지**: 투명도(`RGBA`)가 있는 이미지를 `JPEG`로 변환할 때 배경이 검게 타는 현상을 막기 위해 흰색 배경 마스킹 합성 적용
+- **확장자 자동 분기**: 저장 경로명 확장자를 판별하여 `.jpg`(배경 합성 후 압축)와 `.png`(투명도 보존) 포맷으로 전석 분기 처리
 
 ---
 
-## 📂 프로젝트 파일 구조 (Directory Structure)
+## 📂 프로젝트 구조 (Directory Structure)
 
-```text
+```markdown
 ├── main.py            [전체 파이프라인 제어 및 실행 메인 스크립트]
-├── image_loader.py    [로컬 경로 파일 / 네트워크 바이너리 데이터 로드 기능]
-├── frame_merger.py    [EXIF 보정, 가로세로 중앙 크롭, 동적 4분할 병합 기능]
-└── result_saver.py    [확장자 분기 및 JPEG 알파 채널 화질 저하 방지 저장 기능]
+├── image_loader.py    [로컬 경로 파일 / 네트워크 바이너리 데이터 로드]
+├── frame_merger.py    [EXIF 보정, 가로세로 중앙 크롭, 동적 4분할 병합]
+└── result_saver.py    [확장자 분기 및 JPEG 알파 채널 보정 저장]
 ```
 
 ---
 
 ## 🚀 실행 방법 (How to Run)
 
-본 네 컷 병합 모듈을 로컬 환경에서 다운로드하고 테스트 샘플을 실행하는 단계별 가이드입니다.
-
 ### 1️⃣ 필수 라이브러리 설치
-[cite_start]프로젝트 실행에 필요한 이미지 처리 라이브러리 `Pillow`를 설치합니다[cite: 54, 305].
+프로젝트 실행에 필요한 이미지 처리 라이브러리 `Pillow`를 설치한다. 
 ```bash
 pip install Pillow
 ```
@@ -66,7 +56,7 @@ pip install Pillow
 
 ### 3️⃣ 메인 스크립트(main.py) 파일 설정
 
-main.py 파일 안의 하단의 main 블록에 실제 이미지 파일 이름을 매칭해 줍니다. 
+main.py 파일 안의 하단의 main 블록에 실제 이미지 파일 이름을 매칭한다. 
 ``` python
 if __name__ == "__main__":
     run_four_cut_pipeline(
@@ -81,4 +71,31 @@ if __name__ == "__main__":
     )
 ```
 
-### 이후 main.py 실행 후 최종 결과 확인
+### 4️⃣ 이후 main.py 실행 후 최종 결과 확인
+
+---
+
+## 예시 실행 결과 
+사진 크기는 4:3 비율로 진행 
+
+<table>
+  <tr>
+    <td width="50%" valign="top" align="center">
+
+프레임 예시
+
+
+<img width="80%" alt="frame" src="https://github.com/user-attachments/assets/8895bf84-e393-41f2-ba41-3f136862098d" />
+
+  </td>
+    <td width="50%" valign="top" align="center">
+
+결과 예시 
+
+
+<img width="80%" alt="결과물" src="https://github.com/user-attachments/assets/50974d67-74a2-4cef-a08b-ada3422f0c91" />
+
+  </td>
+  </tr>
+</table>
+
