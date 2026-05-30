@@ -82,7 +82,7 @@ if __name__ == "__main__":
   <tr>
     <td width="50%" valign="top" align="center">
 
-프레임 예시
+### 프레임 예시
 
 
 <img width="80%" alt="frame" src="https://github.com/user-attachments/assets/8895bf84-e393-41f2-ba41-3f136862098d" />
@@ -90,7 +90,7 @@ if __name__ == "__main__":
   </td>
     <td width="50%" valign="top" align="center">
 
-결과 예시 
+### 결과 예시 
 
 
 <img width="80%" alt="결과물" src="https://github.com/user-attachments/assets/50974d67-74a2-4cef-a08b-ada3422f0c91" />
