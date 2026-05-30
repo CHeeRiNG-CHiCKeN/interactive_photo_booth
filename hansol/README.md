@@ -1,8 +1,8 @@
-﻿# Hansol's Progress
+﻿# Hansol's Progress - 최종 이미지 4분할로 만들기
 
-# 📸 AI Photo Booth - Four Cuts Frame Merger (5/30)
+## 📸 AI Photo Booth - Four Cuts Frame Merger (5/30)
 
-본 모듈은 AI 포토부스 프로젝트에서 촬영 및 변환이 완료된 **개별 사진 4장을 하나의 네 컷 프레임 이미지로 자동 병합**하는 핵심 백엔드 기능이다. 
+AI 포토부스 프로젝트에서 촬영 및 변환이 완료된 **개별 사진 4장을 하나의 네 컷 프레임 이미지로 자동 병합**하는 핵심 백엔드 기능
 
 ---
 
