@@ -1,0 +1,528 @@
+# 인터랙티브 포토부스 프로젝트
+
+손가락 제스처 인식을 활용한 웹 기반 인터랙티브 포토부스 시스템입니다. 브라우저에서 카메라를 통해 실시간으로 포즈를 감지하고, 캐릭터 렌더링, 그리기, 스티커 배치 등 다양한 창의적 기능을 제공합니다.
+
+---
+
+## 🎯 프로젝트 개요
+
+세 가지 옵션으로 구성된 웹 애플리케이션으로, 각각 다른 기능을 제공합니다:
+- **Option 2**: 포즈 감지 및 시각화
+- **Option 3**: 포토부스 (캐릭터 아바타)
+- **Option 4**: 손가락 드로잉 & 스티커
+
+---
+
+## 🛠️ 개발 환경
+
+### 필수 요구사항
+- **최신 웹 브라우저** (Chrome, Firefox, Safari 등)
+  - WebGL 지원 필수
+  - MediaPipe API 지원
+- **카메라 권한** (기기의 웹캠 접근)
+- **로컬 HTTP 서버** (파일 시스템이 아닌 서버로 실행)
+
+### 개발 환경 특징
+- **프레임워크 불필요**: Vanilla JavaScript (순수 JS)
+- **빌드 도구 불필요**: CDN 라이브러리 사용
+- **간단한 배포**: HTML 파일만 서버에 업로드
+- **모듈 로드**: ES6 Dynamic Import로 라이브러리 로드
+
+### 개발에 사용된 도구
+- **Vanilla JavaScript (ES6+)**: 순수 JavaScript로 로직 구현
+- **HTML5 Canvas**: 비디오 렌더링, 드로잉 캔버스
+- **CSS3**: 스타일링 및 레이아웃
+- **ES6 Dynamic Import**: 라이브러리 동적 로드
+
+---
+
+## 📦 활용 기술
+
+### 0. 라이브러리 로드 방식 (ES6 Dynamic Import + CDN)
+```javascript
+// ES6 Dynamic Import로 CDN 라이브러리 동적 로드
+const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
+const FilesetResolver = vision.FilesetResolver;
+const HandLandmarker = vision.HandLandmarker;
+```
+- **CDN (Content Delivery Network)**: jsdelivr.net에서 라이브러리 직접 로드
+- **ES6 Dynamic Import**: `await import()`로 런타임에 모듈 로드
+- **장점**: 빌드 과정 없이 간단하게 라이브러리 사용 가능
+
+### 1. MediaPipe (손가락 인식)
+```
+라이브러리: @mediapipe/tasks-vision@0.10.0
+로드 방식: ES6 Dynamic Import + CDN
+기능: HandLandmarker로 손가락 21개 포인트 감지
+특징: 실시간 양손 감지, 높은 정확도
+```
+- **사용 옵션**: Option 2, 3, 4
+- **감지 포인트**: 
+  - 손목, 손가락(검지/중지/약지/소지/엄지) 각 3개 = 21개 포인트
+  - 신뢰도(confidence) 값 함께 제공
+
+### 2. TensorFlow.js + MoveNet (포즈 감지)
+```
+라이브러리: @tensorflow/tfjs@4.11.0
+모델: MoveNet (SINGLEPOSE_LIGHTNING)
+기능: 신체 17개 포인트 감지
+```
+- **감지 포인트**: 코, 눈, 귀, 어깨, 팔꿈치, 손목, 골반, 무릎, 발목
+- **특징**: 가볍고 빠른 추론 속도
+
+### 3. SVG (벡터 그래픽)
+- 캐릭터 얼굴, 몸통, 손 렌더링
+- 부드러운 곡선과 그래디언트 표현
+- 해상도 독립적 렌더링
+
+### 4. Canvas API
+- 비디오 스트림 렌더링
+- 드로잉 및 스티커 배치
+- 실시간 그래픽 처리
+
+---
+
+## 🎮 옵션별 기능
+
+### Option 2: 🎥 포즈 감지
+**목적**: AI 포즈 감지 기술 시연
+
+**주요 기능**:
+- 신체 17개 포인트 감지 및 시각화
+- 포즈 감지 신뢰도 색상 표시 (빨강>주황>노랑)
+- 손가락 21개 포인트 감지 (수동)
+- 실시간 FPS 표시
+- 포즈/손 감지 상태 모니터링
+
+**기술 특징**:
+- MoveNet 포즈 감지 모델
+- MediaPipe HandLandmarker
+- 신뢰도 기반 포인트 필터링
+- 포즈 히스토리 (15프레임 딜레이 효과)
+
+**사용 시나리오**:
+- 기술 검증 및 데모
+- 포즈 감지 정확도 테스트
+
+---
+
+### Option 3: 🎭 포토부스 (캐릭터)
+**목적**: 포즈를 귀여운 캐릭터로 실시간 변환
+
+**주요 기능**:
+- 실시간 캐릭터 렌더링
+- 얼굴 인식 및 특징 표현
+  - 눈 (흰자, 동공, 광택)
+  - 코 (V자 모양)
+  - 입 (베지어 곡선)
+  - 귀
+  - 목
+- 몸통 및 팔 렌더링
+- 손가락 개별 렌더링
+  - 둥근 손가락 모양 (3D 튜브 효과)
+  - 손가락 끝 원형 캡
+- 입체적 쉐이딩 (그래디언트, 하이라이트)
+
+**기술 특징**:
+- SVG 벡터 렌더링
+- 얼굴 특징점 기반 비율 계산
+- 입체 표현을 위한 그래디언트
+- 수직 벡터를 이용한 3D 튜브 손가락 렌더링
+
+**캐릭터 설정**:
+- 얼굴: 피부색 그래디언트 (밝은 중심 → 어두운 가장자리)
+- 상의: 파란색 (rgb(100, 150, 220))
+- 하의: 진한 파란색 (rgb(60, 60, 80))
+- 손가락: 연한 주황색 계열
+
+**사용 시나리오**:
+- 재미있는 포토 경험 제공
+- 소셜 미디어 공유용 콘텐츠
+- 대기 시간 활용
+
+---
+
+### Option 4: ✨ 손가락 드로잉 & 스티커
+**목적**: 손가락 제스처로 자유롭게 드로잉하고 스티커 배치
+
+**주요 기능**:
+
+#### A. 드로잉 모드 🖌️
+- **손가락 인식**: 검지 끝 포인트 추적
+- **손 상태 감지**:
+  - 손가락 펼침 (검지와 중지 거리 > 0.03) → 그리기
+  - 주먹 모양 → 그리기 중단
+- **부드러운 선 표현**:
+  - Catmull-Rom Spline 곡선 보간
+  - 최근 5프레임 포인트 히스토리 저장
+  - 점이 연결된 모양 아닌 자연스러운 브러쉬
+- **입체적 선 표현**:
+  - 그림자 (검은색, 약간 아래)
+  - 메인 선 (하늘색)
+  - 하이라이트 (흰색)
+  - 총 3층 렌더링으로 깊이 표현
+
+#### B. 스티커 모드 🏷️
+- **스티커 종류**: ❤️ 하트, ⭐ 별, 🍔 햄버거, 😸 고양이입
+- **스티커 배치**:
+  - 두 손가락 핀치 제스처 (검지 + 중지) 감지
+  - 손가락을 따라다니는 임시 스티커 (반투명)
+  - 핀치 해제 시 그 위치에 스티커 고정
+  - 여러 스티커 중첩 가능
+- **스티커 렌더링**:
+  - SVG 벡터 그래픽
+  - 각 스티커별 고유 스타일
+
+#### 기술 특징
+- **제스처 감지**:
+  - 손가락 상태: 펼침/주먹 판별
+  - 핀치: 두 손가락 거리 계산
+- **곡선 보간**: Catmull-Rom Spline
+- **포인트 히스토리**: 최근 5프레임 저장 후 평균
+- **좌우 반전 방지**: 정규화된 좌표 (1 - x) 변환
+- **다중 캔버스**: 비디오, 드로잉, 스티커 레이어 분리
+
+**사용 시나리오**:
+- 자유로운 창의적 표현
+- 스티커로 재미있는 이미지 구성
+- 실시간 상호작용 경험
+
+---
+
+## 📂 파일 구조
+
+```
+goeasu_juhee/
+├── README.md                 # 프로젝트 문서 (이 파일)
+├── SETUP.md                  # 초기 설정 가이드
+├── PROJECT_STATUS.md         # 프로젝트 진행 현황
+└── public/
+    ├── option2.html          # 포즈 감지 (24KB)
+    ├── option3.html          # 포토부스 캐릭터 (47KB)
+    └── option4.html          # 드로잉 & 스티커 (12KB)
+```
+
+### 파일 크기 정보
+- 총 크기: ~83KB (매우 가볍음)
+- 의존성: CDN 라이브러리만 사용 (npm 불필요)
+- 빌드 필요 없음
+
+---
+
+## 🚀 실행 방법
+
+### 1단계: 로컬 서버 실행
+프로젝트 폴더에서:
+
+```bash
+# Python 3
+cd public
+python -m http.server 8000
+
+# 또는 Python 2
+python -m SimpleHTTPServer 8000
+
+# 또는 Node.js (http-server 설치 후)
+npx http-server public -p 8000
+
+# 또는 다른 로컬 서버 사용
+# (직접 HTML 파일 열기는 MediaPipe 제약으로 작동 안 함)
+```
+
+### 2단계: 브라우저에서 접속
+```
+http://localhost:8000/option2.html
+http://localhost:8000/option3.html
+http://localhost:8000/option4.html
+```
+
+### 3단계: 카메라 권한 승인
+브라우저에서 카메라 접근 요청 시 "허용" 클릭
+
+---
+
+## 📋 각 옵션 사용 가이드
+
+### Option 2 (포즈 감지)
+1. **카메라 시작** 버튼 클릭
+2. 모든 모델이 로드될 때까지 대기
+3. 신체 및 손 포즈를 카메라에 띄우면 실시간 인식
+4. 우측 패널에서 감지 상태 확인
+
+**팁**:
+- 밝은 환경에서 더 잘 인식됨
+- 손가락을 펼쳤을 때 잘 감지됨
+- FPS는 기기 성능에 따라 다름
+
+### Option 3 (포토부스)
+1. **카메라 시작** 버튼 클릭
+2. 모든 모델이 로드될 때까지 대기
+3. 카메라에 포즈를 띄우면 캐릭터로 변환
+4. 자유롭게 포즈를 취하면 실시간으로 반영
+
+**팁**:
+- 얼굴이 화면에 명확하게 보여야 함
+- 손가락을 펼친 포즈가 더 예쁨
+- 느린 움직임이 더 부드럽게 표현됨
+
+### Option 4 (드로잉 & 스티커)
+#### 그리기 모드
+1. **카메라 시작** 클릭
+2. 🖌️ 그리기 탭 (기본값)
+3. **손가락을 펼쳐서** 카메라에 보이면 그려짐
+4. **주먹을 쥐면** 그리기 중단
+5. **초기화**: 그린 내용 삭제
+6. **다운로드**: 이미지 저장
+
+#### 스티커 모드
+1. **카메라 시작** 클릭
+2. 🏷️ **스티커 탭** 클릭
+3. 원하는 스티커 (❤️/⭐/🍔/😸) 선택
+4. **두 손가락 핀치 제스처** (검지 + 중지를 붙임)
+   - 스티커가 반투명하게 손가락 따라다님
+5. **핀치 해제** (손가락 펼침)
+   - 그 위치에 스티커 고정
+6. 반복해서 여러 스티커 배치 가능
+
+**팁**:
+- 드로잉 선은 부드럽게 이어짐 (Catmull-Rom Spline)
+- 스티커는 여러 개 중첩 가능
+- 다운로드한 이미지는 PNG 형식
+
+---
+
+## 💡 기술 구현 세부사항
+
+### 손가락 인식 (MediaPipe)
+```javascript
+// HandLandmarker에서 21개 포인트 반환
+landmarks[0]  = 손목
+landmarks[1-4] = 엄지 (base, PIP, DIP, tip)
+landmarks[5-8] = 검지 (base, PIP, DIP, tip)
+landmarks[9-12] = 중지
+landmarks[13-16] = 약지
+landmarks[17-20] = 소지
+
+// 정규화된 좌표 (0-1 범위)
+x = fingerTip.x * canvas.width
+y = fingerTip.y * canvas.height
+```
+
+### 손 상태 감지
+```javascript
+// 검지와 중지 거리로 판별
+const distance = Math.sqrt(
+    (landmarks[8].x - landmarks[12].x)² + 
+    (landmarks[8].y - landmarks[12].y)²
+)
+// distance > 0.03 → 손가락 펼침
+// distance < 0.03 → 주먹/접힘
+```
+
+### Catmull-Rom Spline 곡선
+부드러운 선을 그리기 위해 4개의 제어점으로 매끄러운 곡선 생성:
+```javascript
+P(t) = 0.5 * (
+    2*P1 + 
+    (-P0 + P2)*t + 
+    (2*P0 - 5*P1 + 4*P2 - P3)*t² + 
+    (-P0 + 3*P1 - 3*P2 + P3)*t³
+)
+```
+
+### 3D 튜브 손가락 렌더링
+수직 벡터를 이용해 손가락에 깊이 표현:
+```javascript
+// 손가락 방향 각도 계산
+angle = atan2(endY - startY, endX - startX)
+
+// 수직 벡터로 폭 표현
+perpX = sin(angle) * fingerWidth
+perpY = -cos(angle) * fingerWidth
+
+// 베지어 곡선으로 둥근 튜브 형태
+drawCtx.quadraticCurveTo(x, y, nextX, nextY)
+```
+
+---
+
+## 🎨 디자인 시스템
+
+### 색상 팔레트
+- **Primary**: #667eea (보라색) - 배경, 주요 버튼
+- **Secondary**: #e0e0e0 (밝은 회색) - 보조 버튼
+- **Canvas**: #000000 (검은색) - 비디오 배경
+- **Text**: #333333 (진한 회색) - 텍스트
+
+### 레이아웃
+- **최대 너비**: 900px
+- **패딩**: 30px
+- **모서리 반경**: 20px (container), 15px (video-wrapper)
+- **그림자**: 0 20px 60px rgba(0, 0, 0, 0.3)
+
+### 타이포그래피
+- **폰트**: Segoe UI, Tahoma, Geneva, Verdana, sans-serif
+- **제목**: 2.5em, Bold, #333
+- **본문**: 1.1em, Regular, #666
+
+---
+
+## 🔧 향후 개발 가능한 기능
+
+### Option 2 확장
+- 자세 분석 (앉음/서있음/누움 판별)
+- 운동 자세 교정 기능
+- 다중 사람 감지
+
+### Option 3 확장
+- 다양한 캐릭터 선택 (동물, 로봇 등)
+- 표정 인식 및 반영
+- 옷/악세서리 커스터마이징
+- GIF 또는 비디오 녹화
+
+### Option 4 확장
+- 브러쉬 색상 선택
+- 선 두께 조절
+- 지우개 모드
+- 여러 레이어 지원
+- 필터 및 효과 추가
+- 소셜 미디어 직접 공유
+
+---
+
+## 📊 성능 특성
+
+### 초기 로딩 시간
+- **네트워크**: 라이브러리는 CDN에서 로드 (~3-5초)
+- **모델 초기화**: MediaPipe + TensorFlow (~2-3초)
+- **총 시간**: 약 5-8초
+
+### 실시간 성능
+- **FPS**: 30-60 fps (기기/브라우저에 따라 다름)
+- **지연 시간**: ~100-150ms
+- **메모리**: ~50-100MB (평균)
+- **CPU**: 기기에 따라 30-70% 사용
+
+### 최적화 기법
+- CDN 라이브러리 캐싱
+- 포인트 히스토리로 부드러운 보간
+- Canvas 최적화 (z-index 레이어 분리)
+- 신뢰도 필터링 (노이즈 제거)
+
+---
+
+## 🐛 알려진 제한사항
+
+1. **브라우저 호환성**
+   - IE 미지원
+   - Safari에서 일부 기능 제한
+
+2. **카메라 성능**
+   - 저조도 환경에서 인식률 저하
+   - 빠른 움직임에 추적 어려움
+   - 여러 사람 감지 시 성능 저하
+
+3. **기기 요구사항**
+   - 최신 브라우저 필수
+   - WebGL 지원 필수
+   - 중간 이상의 프로세서 필요
+
+4. **보안**
+   - HTTPS 또는 localhost에서만 카메라 접근 가능
+   - 프라이빗 창에서 동작 불가능할 수 있음
+
+---
+
+## 📝 개발자 가이드
+
+### 새로운 옵션 추가하기
+
+1. **HTML 파일 생성**: `public/option5.html`
+2. **기본 템플릿 복사**: option2/3/4 중 가장 유사한 것 선택
+3. **스타일 통일**: 배경(보라색 그래디언트), 폰트(Segoe UI) 유지
+4. **기능 구현**: JavaScript로 로직 추가
+5. **테스트**: `http://localhost:8000/option5.html`
+
+### 중요 코드 패턴
+
+#### 1. ES6 Dynamic Import로 라이브러리 로드 (CDN)
+```javascript
+// 런타임에 CDN에서 라이브러리 동적 로드
+const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
+const FilesetResolver = vision.FilesetResolver;
+const HandLandmarker = vision.HandLandmarker;
+```
+
+#### 2. MediaPipe 초기화
+```javascript
+handLandmarker = await HandLandmarker.createFromOptions(
+    await FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm'
+    ),
+    {
+        baseOptions: {
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/...'
+        },
+        runningMode: 'VIDEO',
+        numHands: 1
+    }
+);
+```
+
+#### 3. 실시간 프레임 처리
+```javascript
+function processFrame() {
+    const results = handLandmarker.detectForVideo(video, performance.now());
+    if (results.landmarks.length > 0) {
+        const landmarks = results.landmarks[0]; // 첫 번째 손
+        // 21개 포인트로 작업
+    }
+    requestAnimationFrame(processFrame);
+}
+```
+
+#### 4. Canvas & SVG 렌더링
+```javascript
+// Canvas에 비디오 렌더링
+ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+// SVG로 벡터 그래픽
+ctx.fillStyle = '#667eea';
+ctx.fillRect(x, y, width, height);
+```
+
+---
+
+## 📚 참고 자료
+
+### 공식 문서
+- [MediaPipe Hands](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker)
+- [TensorFlow.js](https://js.tensorflow.org/)
+- [MoveNet 모델](https://www.tensorflow.org/hub/tutorials/movenet)
+
+### 웹 API
+- [Canvas API](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API)
+- [getUserMedia API](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia)
+- [SVG](https://developer.mozilla.org/en-US/docs/Web/SVG)
+
+---
+
+## 🤝 기여 방법
+
+이 프로젝트를 개선하려면:
+
+1. 버그 리포트: 문제 상황을 자세히 설명
+2. 새로운 기능 제안: 아이디어와 구현 방법 제시
+3. 코드 리뷰: 성능 개선 의견 공유
+4. 문서 개선: 이 README 업데이트
+
+---
+
+## 📞 문의
+
+프로젝트 관련 문의: goaesu5@gmail.com
+
+---
+
+**마지막 업데이트**: 2026년 5월 22일
+**프로젝트 상태**: 완성 ✅
