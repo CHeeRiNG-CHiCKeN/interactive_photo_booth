@@ -309,6 +309,51 @@ Scene
 
 ---
 
+
+## AI 생성 캐릭터 사용하기
+
+Mixamo 기본 캐릭터 대신, 생성형 AI로 만든 커스텀 얼굴을 가진 3D 아바타를 사용할 수 있습니다.
+
+
+### 파이프라인
+
+셀카 or AI 생성 얼굴 이미지
+↓
+Ready Player Me (웹에서 3D 아바타 생성)
+↓
+Mixamo (애니메이션 적용)
+↓
+Unity (WebSocket + IK 연결)
+
+
+
+### 방법 1 — Ready Player Me
+
+1. [readyplayer.me](https://readyplayer.me) 접속 → 셀카 업로드
+2. AI가 자동으로 3D 아바타 생성 → 얼굴 / 헤어 / 옷 커스터마이징
+3. **GLB 포맷**으로 내보내기
+4. Mixamo에 드래그 앤 드롭 → 애니메이션 리깅 적용
+5. FBX for Unity로 최종 다운로드 → Step 3과 동일하게 임포트
+
+- Unity 공식 SDK 제공 (`com.readyplayerme.avatarloader`)
+- 완전 무료
+- 
+
+### 방법 2 — AI 이미지 → Ready Player Me
+
+1. Midjourney / DALL·E / Stable Diffusion으로 얼굴 이미지 생성
+2. 해당 이미지를 Ready Player Me에 업로드
+3. 이후 과정은 방법 1과 동일
+
+### 방법 3 — MetaHuman Creator (고퀄리티, 고난도)
+
+- Unreal Engine 공식 도구, 실사급 얼굴 생성 가능
+- Unity로 옮기는 과정이 복잡하여 초보자에게는 비추천
+
+
+---
+
+
 ## 참고 자료
 
 - [Unity Animation Rigging 공식 문서](https://docs.unity3d.com/Packages/com.unity.animation.rigging@1.3/manual/index.html)
